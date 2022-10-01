@@ -8,7 +8,12 @@ class AuthenticationProvider extends BaseProvider {
   String userLogoutStatus = "user_logout_status";
   String fetchUserDataStatus = "fetch_user_data_status";
 
+  String? docId = "";
+  bool readOnly = false;
+
   late UserCredential? userCred;
+  void getUserData() async {}
+
   Future<UserCredential> signInWithGoogle() async {
     try {
       GoogleAuthProvider googleProvider = GoogleAuthProvider();
@@ -16,17 +21,16 @@ class AuthenticationProvider extends BaseProvider {
       googleProvider
           .addScope('https://www.googleapis.com/auth/contacts.readonly');
       userCred = await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
       return userCred!;
     } catch (e) {
       throw Error();
     }
   }
 
-  void userSignup(String email, String password) async {}
-
   Future<void> userLogout() async {
     await FirebaseAuth.instance.signOut();
   }
 
-  void getUserData() async {}
+  void userSignup(String email, String password) async {}
 }

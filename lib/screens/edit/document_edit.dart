@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:html' as html;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:geekydocs/utils/responsive.dart';
+import 'package:go_router/go_router.dart';
 
 class DocumentEditPage extends StatefulWidget {
   const DocumentEditPage({Key? key}) : super(key: key);
@@ -245,6 +247,11 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
   @override
   void initState() {
     super.initState();
+    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
+      if (firebaseUser == null) {
+        context.go("/");
+      }
+    });
     firebaseDatabaseference = FirebaseDatabase.instance;
     DatabaseReference ref = firebaseDatabaseference.ref("value");
 

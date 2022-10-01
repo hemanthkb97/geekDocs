@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geekydocs/geek_docs.dart';
@@ -15,18 +15,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   User? user;
   @override
-  void initState() {
-    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
-      if (firebaseUser != null) {
-        setState(() {
-          user = firebaseUser;
-        });
-      }
-    });
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     if (user != null) {
       return Scaffold(
@@ -35,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
           leadingWidth: 300,
           leading: Row(
             children: [
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Icon(
                 Icons.article,
                 color: Theme.of(context).primaryColor,
@@ -64,12 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                SizedBox(width: 5),
+                const SizedBox(width: 5),
                 Text(
                   user!.displayName!,
                   style: Theme.of(context).textTheme.headline4,
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 IconButton(
                     key: const Key('logoutButton'),
                     icon: const Icon(
@@ -81,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       await context.read<AuthenticationProvider>().userLogout();
                       context.go('/');
                     }),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
               ],
             )
           ],
@@ -100,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: Card(
                   elevation: 5,
-                  child: Container(
+                  child: SizedBox(
                     width: 250,
                     height: 380,
                     child: Center(
@@ -117,52 +105,64 @@ class _HomeScreenState extends State<HomeScreen> {
                 "Recent Documents",
                 style: Theme.of(context).textTheme.headline4,
               ),
-              InkWell(
-                onTap: () {},
-                child: Card(
-                  elevation: 5,
-                  child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      width: 250,
-                      height: 380,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            flex: 4,
-                            child: Container(),
-                          ),
-                          Divider(
-                            color: Colors.grey[200]!,
-                            thickness: 1,
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Container(
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.article,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 27,
-                                  ),
-                                  Text("Name of doc"),
-                                  Spacer(),
-                                  Icon(
-                                    Icons.info,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 27,
-                                  ),
-                                  SizedBox(width: 7)
-                                ],
+              StreamBuilder(
+                  stream:
+                      FirebaseFirestore.instance.collection("docs").snapshots(),
+                  builder: (context, snapshot) {
+                    return !snapshot.hasData
+                        ? const CircularProgressIndicator()
+                        : Wrap(
+                            children: [
+                              InkWell(
+                                onTap: () {},
+                                child: Card(
+                                  elevation: 5,
+                                  child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.grey[200]!),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Expanded(
+                                            flex: 4,
+                                            child: Container(),
+                                          ),
+                                          Divider(
+                                            color: Colors.grey[200]!,
+                                            thickness: 1,
+                                          ),
+                                          Expanded(
+                                            flex: 1,
+                                            child: Container(
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.article,
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                    size: 27,
+                                                  ),
+                                                  const Text("Name of doc"),
+                                                  const Spacer(),
+                                                  Icon(
+                                                    Icons.info,
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                    size: 27,
+                                                  ),
+                                                  const SizedBox(width: 7)
+                                                ],
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      )),
+                                ),
                               ),
-                            ),
-                          )
-                        ],
-                      )),
-                ),
-              ),
+                            ],
+                          );
+                  }),
             ],
           ),
         ),
@@ -174,5 +174,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CircularProgressIndicator(
       color: Theme.of(context).primaryColor,
     ))));
+  }
+
+  @override
+  void initState() {
+    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
+      if (firebaseUser != null) {
+        setState(() {
+          user = firebaseUser;
+        });
+      } else {
+        context.go("/");
+      }
+    });
+    super.initState();
   }
 }
