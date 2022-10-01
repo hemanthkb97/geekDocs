@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geekydocs/geek_docs.dart';
+import 'package:geekydocs/screens/home/create_popup.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -82,17 +83,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   spacing: 20,
                   runSpacing: 20,
                   children: [
-                    Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      child: Container(
-                        width: 220,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 6, horizontal: 24),
-                        child: const Text(
-                          "Create New Document",
-                          style: TextStyle(fontSize: 16),
+                    InkWell(
+                      onTap: () {
+                        showDialog(
+                            context: context,
+                            builder: ((context) => const CreatePopup()));
+                      },
+                      child: Card(
+                        elevation: 4,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        child: Container(
+                          width: 220,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 6, horizontal: 24),
+                          child: const Text(
+                            "Create New Document",
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ),
                     ),
@@ -107,28 +115,34 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (snapshot.data != null)
                       ...List.generate(
                         snapshot.data!.docs.length,
-                        (index) => InkWell(
-                          onTap: () {
-                            Provider.of<AuthenticationProvider>(context,
-                                    listen: false)
-                                .doc = snapshot.data!.docs[index].data();
-                            context.go("/document");
-                          },
-                          child: Card(
-                            elevation: 4,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            child: Container(
-                              width: 220,
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 6, horizontal: 24),
-                              child: Text(
-                                snapshot.data!.docs[index].data()["doc_name"],
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          ),
-                        ),
+                        (index) => snapshot.data!.docs[index]
+                                .data()["shared"]
+                                .containsKey(
+                                    FirebaseAuth.instance.currentUser!.email)
+                            ? InkWell(
+                                onTap: () {
+                                  Provider.of<AuthenticationProvider>(context,
+                                          listen: false)
+                                      .doc = snapshot.data!.docs[index];
+                                  context.go("/document");
+                                },
+                                child: Card(
+                                  elevation: 4,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  child: Container(
+                                    width: 220,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 6, horizontal: 24),
+                                    child: Text(
+                                      snapshot.data!.docs[index]
+                                          .data()["doc_name"],
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox(),
                       )
                   ],
                 );

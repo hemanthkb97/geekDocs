@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../geek_docs.dart';
@@ -8,7 +9,7 @@ class AuthenticationProvider extends BaseProvider {
   String userLogoutStatus = "user_logout_status";
   String fetchUserDataStatus = "fetch_user_data_status";
 
-  Map<String, dynamic>? doc;
+  DocumentSnapshot<Map<String, dynamic>>? doc;
   bool readOnly = false;
 
   late UserCredential? userCred;

@@ -25,10 +25,13 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
       const TextSelection(baseOffset: 0, extentOffset: 0);
   late quill.QuillController _controller;
   FocusNode focusNode = FocusNode();
-  String? _streamedValues = "";
+  Map<String, dynamic> _streamedValues = {};
   late FirebaseDatabase firebaseDatabaseference;
   dynamic json;
   bool viewMode = false;
+  bool userHasWriteAccess = false;
+  bool loading = true;
+  Map<String, dynamic> comments = {};
 
   @override
   Widget build(BuildContext context) {
@@ -49,19 +52,33 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                 ),
               ),
             ),
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: ListTile(
-                onTap: () {
-                  Scaffold.of(context).closeEndDrawer();
-                },
-                title: const Text(
-                  "Hemanth Kumar b",
-                  style: TextStyle(color: Colors.black),
-                ),
-                subtitle: const Text("hell comments"),
-              ),
-            ),
+            Expanded(
+                child: comments.keys.isNotEmpty
+                    ? ListView.builder(
+                        itemCount: comments.keys.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            child: ListTile(
+                              onTap: () {
+                                Scaffold.of(context).closeEndDrawer();
+                              },
+                              title: Text(
+                                comments[comments.keys.elementAt(index)]
+                                    ["name"],
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                              subtitle: Text(
+                                  comments[comments.keys.elementAt(index)]
+                                      ["comment"]),
+                            ),
+                          );
+                        },
+                      )
+                    : const Center(
+                        child: Text("No Comments Found"),
+                      ))
           ],
         ),
       ),
@@ -86,9 +103,9 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Geek Docs - Text Document",
-                        style: TextStyle(fontSize: 18),
+                      Text(
+                        "Geek Docs - ${Provider.of<AuthenticationProvider>(context, listen: false).doc?.data()?["doc_name"] ?? ""}",
+                        style: const TextStyle(fontSize: 18),
                       ),
                       const SizedBox(
                         height: 8,
@@ -125,16 +142,17 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                           const SizedBox(
                             width: 12,
                           ),
-                          InkWell(
-                            onTap: () {
-                              viewMode = !viewMode;
-                              setState(() {});
-                            },
-                            child: Text(
-                              viewMode ? "Edit Mode" : "View",
-                              style: const TextStyle(fontSize: 14),
+                          if (userHasWriteAccess)
+                            InkWell(
+                              onTap: () {
+                                viewMode = !viewMode;
+                                setState(() {});
+                              },
+                              child: Text(
+                                viewMode ? "Edit Mode" : "View",
+                                style: const TextStyle(fontSize: 14),
+                              ),
                             ),
-                          ),
                         ],
                       )
                     ],
@@ -162,7 +180,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                 ],
               ),
             ),
-            if (!viewMode)
+            if (!viewMode && userHasWriteAccess)
               Container(
                 width: MediaQuery.of(context).size.width,
                 padding:
@@ -190,8 +208,9 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                   showCodeBlock: false,
                   showHeaderStyle: false,
                   showListBullets: false,
-                  iconTheme: const quill.QuillIconTheme(
-                      iconUnselectedColor: Colors.black),
+                  iconTheme: quill.QuillIconTheme(
+                      iconUnselectedColor: Colors.black,
+                      iconSelectedFillColor: Theme.of(context).primaryColor),
                 ),
               ),
             Expanded(
@@ -228,7 +247,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                                 autoFocus: true,
                                 focusNode: focusNode,
                                 scrollable: false,
-                                readOnly: viewMode,
+                                readOnly: viewMode && userHasWriteAccess,
                               ),
                             ),
                           ),
@@ -250,59 +269,82 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
     super.initState();
     final provider =
         Provider.of<AuthenticationProvider>(context, listen: false);
+    if (provider.doc == null) {
+      context.replace("/home");
+    }
     FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
-      if (firebaseUser == null || provider.doc == null) {
-        context.go("/");
+      if (firebaseUser == null) {
+        context.replace("/");
       }
     });
+    print(provider.doc!.data()!["shared"]);
+    userHasWriteAccess = provider.doc!.data()!["shared"]
+        [FirebaseAuth.instance.currentUser!.email];
     firebaseDatabaseference = FirebaseDatabase.instance;
-    DatabaseReference ref = firebaseDatabaseference.ref("value");
+    DatabaseReference ref = firebaseDatabaseference.ref(provider.doc!.id);
 
     _controller = quill.QuillController(
       document: json != null ? quill.Document.fromJson(json) : quill.Document(),
       selection: const TextSelection.collapsed(offset: 0),
     );
 
-    _controller.addListener(() {
-      setState(() {
-        _streamedValues = jsonEncode(_controller.document.toDelta().toJson());
-
-        Future.delayed(const Duration(milliseconds: 1), () {
-          firebaseDatabaseference.ref('value').set(_streamedValues);
-        });
-      });
-    });
-
-    ref.onValue.listen((event) {
-      DataSnapshot dataSnapshot = event.snapshot;
-      _selection = _controller.selection;
-      _controller.dispose();
-      setState(() {
-        _streamedValues = dataSnapshot.value.toString();
-        json = jsonDecode(_streamedValues ?? "");
-        _controller = quill.QuillController(
-          document:
-              json != null ? quill.Document.fromJson(json) : quill.Document(),
-          selection: _selection,
-        );
-
-        _controller.addListener(() {
-          setState(() {
-            _streamedValues =
-                jsonEncode(_controller.document.toDelta().toJson());
-            Future.delayed(const Duration(milliseconds: 1), () {
-              firebaseDatabaseference.ref('value').set(_streamedValues);
-            });
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _controller.addListener(() {
+        setState(() {
+          _streamedValues["value"] = _controller.document.toDelta().toJson();
+          _streamedValues["comments"] = comments;
+          Future.delayed(const Duration(milliseconds: 1), () {
+            firebaseDatabaseference
+                .ref(provider.doc!.id)
+                .set(jsonEncode(_streamedValues));
           });
         });
-        focusNode.requestFocus();
+      });
+      ref.onValue.listen((event) {
+        if (!event.snapshot.exists) {
+          return;
+        }
+        DataSnapshot dataSnapshot = event.snapshot;
+        _selection = _controller.selection;
+        bool moveToEnd = false;
+        if (_controller.document.length <= 1) {
+          moveToEnd = true;
+        }
+        _controller.dispose();
+        setState(() {
+          _streamedValues = jsonDecode(dataSnapshot.value.toString());
+          json = _streamedValues["value"];
+          comments = Map<String, dynamic>.from(_streamedValues["comments"]);
+
+          _controller = quill.QuillController(
+            document:
+                json != null ? quill.Document.fromJson(json) : quill.Document(),
+            selection: _selection,
+          );
+          _controller.addListener(() {
+            setState(() {
+              _streamedValues["value"] =
+                  _controller.document.toDelta().toJson();
+              _streamedValues["comments"] = comments;
+              Future.delayed(const Duration(milliseconds: 1), () {
+                firebaseDatabaseference
+                    .ref(provider.doc!.id)
+                    .set(jsonEncode(_streamedValues));
+              });
+            });
+          });
+          focusNode.requestFocus();
+          if (moveToEnd) {
+            _controller.moveCursorToEnd();
+          }
+        });
       });
     });
   }
 
   Future<void> _onPointerDown(PointerDownEvent event) async {
     html.window.document.onContextMenu.listen((evt) => evt.preventDefault());
-    if (_controller.selection.isCollapsed) {
+    if (_controller.selection.isCollapsed && !userHasWriteAccess) {
       return;
     }
     if (event.kind == PointerDeviceKind.mouse &&
@@ -332,7 +374,25 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
               actions: [
                 InkWell(
                   onTap: () {
-                    print(_controller.selection);
+                    if (text.trim().isEmpty) {
+                      return;
+                    }
+                    firebaseDatabaseference = FirebaseDatabase.instance;
+                    DatabaseReference ref = firebaseDatabaseference.ref(
+                        Provider.of<AuthenticationProvider>(context,
+                                listen: false)
+                            .doc!
+                            .id);
+                    comments[
+                        "${FirebaseAuth.instance.currentUser!.email}_${DateTime.now().toString()}"] = {
+                      "name": FirebaseAuth.instance.currentUser!.displayName,
+                      "comment": text,
+                    };
+                    _streamedValues["value"] =
+                        _controller.document.toDelta().toJson();
+                    _streamedValues["comments"] = comments;
+                    ref.set(jsonEncode(_streamedValues));
+                    Navigator.of(context).pop();
                   },
                   child: Container(
                     color: Colors.green,

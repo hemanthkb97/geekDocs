@@ -210,7 +210,7 @@ class ThemeConfig {
           .copyWith(secondary: accentColor, brightness: brightness),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: accentColor,
-        selectionColor: accentColor,
+        selectionColor: Colors.blue.shade200.withOpacity(0.5),
         selectionHandleColor: accentColor,
       ),
     );
