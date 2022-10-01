@@ -6,3 +6,4 @@ export 'utils/size_config.dart';
 export 'app.dart';
 export 'shared/base_provider.dart';
 export 'shared/theme_provider.dart';
+export 'shared/authentication_provider.dart';

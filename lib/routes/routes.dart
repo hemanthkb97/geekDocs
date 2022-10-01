@@ -8,18 +8,18 @@ GoRouter mainRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const LoginScreen(),
+      builder: (context, state) => const SplashScreen(),
     ),
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
-      path: '/documents',
+      path: '/home',
       builder: (context, state) => const HomeScreen(),
     ),
     GoRoute(
-      path: '/edit',
+      path: '/document',
       builder: (context, state) => const DocumentEditPage(),
     ),
   ],
