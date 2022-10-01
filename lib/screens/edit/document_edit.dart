@@ -62,6 +62,13 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                                 horizontal: 12, vertical: 6),
                             child: ListTile(
                               onTap: () {
+                                _controller.updateSelection(
+                                    TextSelection(
+                                        baseOffset: comments[comments.keys
+                                            .elementAt(index)]["base"],
+                                        extentOffset: comments[comments.keys
+                                            .elementAt(index)]["end"]),
+                                    quill.ChangeSource.LOCAL);
                                 Scaffold.of(context).closeEndDrawer();
                               },
                               title: Text(
@@ -376,7 +383,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                     if (text.trim().isEmpty) {
                       return;
                     }
-                    print(_controller.selection);
+
                     firebaseDatabaseference = FirebaseDatabase.instance;
                     DatabaseReference ref = firebaseDatabaseference.ref(
                         Provider.of<AuthenticationProvider>(context,
