@@ -10,6 +10,8 @@ class DocumentEditPage extends StatefulWidget {
 class _DocumentEditPageState extends State<DocumentEditPage> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Column(
+      children: const [],
+    );
   }
 }
