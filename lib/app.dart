@@ -14,7 +14,7 @@ class App extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: "Geek Docs",
           builder: (context, child) => ResponsiveWrapper.builder(child,
-              minWidth: 1000,
+              minWidth: 480,
               defaultScale: true,
               breakpoints: [
                 const ResponsiveBreakpoint.resize(480, name: MOBILE),

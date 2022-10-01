@@ -7,6 +7,7 @@ GoRouter mainRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/',
+      redirect: (context, state) => "/edit",
       builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
