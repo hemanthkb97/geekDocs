@@ -5,6 +5,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:geekydocs/utils/responsive.dart';
 
 class DocumentEditPage extends StatefulWidget {
   const DocumentEditPage({Key? key}) : super(key: key);
@@ -24,13 +25,45 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
   String? _streamedValues = "";
   late FirebaseDatabase firebaseDatabaseference;
   dynamic json;
+  bool viewMode = false;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.grey.shade200,
-      child: Center(
+    return Scaffold(
+      backgroundColor: Colors.grey.shade200,
+      endDrawer: Drawer(
+        width: 300,
         child: Column(
+          children: [
+            Container(
+              width: 300,
+              color: Colors.green,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: const Center(
+                child: Text(
+                  "Comments",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: ListTile(
+                onTap: () {
+                  Scaffold.of(context).closeEndDrawer();
+                },
+                title: const Text(
+                  "Hemanth Kumar b",
+                  style: TextStyle(color: Colors.black),
+                ),
+                subtitle: const Text("hell comments"),
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Builder(
+        builder: (context) => Column(
           children: [
             Container(
               width: MediaQuery.of(context).size.width,
@@ -40,7 +73,12 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                   color: Colors.white,
                   border: Border(
                       bottom: BorderSide(color: Colors.grey, width: 0.5))),
-              child: Row(
+              child: Flex(
+                direction: Responsive.isMobile(context)
+                    ? Axis.vertical
+                    : Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,49 +123,74 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                             width: 12,
                           ),
                           InkWell(
-                            onTap: () {},
-                            child: const Text(
-                              "View",
-                              style: TextStyle(fontSize: 14),
+                            onTap: () {
+                              viewMode = !viewMode;
+                              setState(() {});
+                            },
+                            child: Text(
+                              viewMode ? "Edit Mode" : "View",
+                              style: const TextStyle(fontSize: 14),
                             ),
                           ),
                         ],
                       )
                     ],
-                  )
+                  ),
+                  if (Responsive.isMobile(context))
+                    const SizedBox(
+                      height: 12,
+                    )
+                  else
+                    const Spacer(),
+                  InkWell(
+                    onTap: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                    child: Container(
+                      color: Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: const Text(
+                        "Comments",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-              decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                      bottom: BorderSide(color: Colors.grey, width: 0.5))),
-              child: quill.QuillToolbar.basic(
-                controller: _controller,
-                showAlignmentButtons: false,
-                showDividers: false,
-                showStrikeThrough: false,
-                showInlineCode: false,
-                showDirection: false,
-                showListCheck: false,
-                showClearFormat: false,
-                toolbarIconSize: 16,
-                showListNumbers: false,
-                showIndent: false,
-                showUndo: false,
-                showRedo: false,
-                showBackgroundColorButton: false,
-                showQuote: false,
-                showCodeBlock: false,
-                showHeaderStyle: false,
-                showListBullets: false,
-                iconTheme: const quill.QuillIconTheme(
-                    iconUnselectedColor: Colors.black),
+            if (!viewMode)
+              Container(
+                width: MediaQuery.of(context).size.width,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                        bottom: BorderSide(color: Colors.grey, width: 0.5))),
+                child: quill.QuillToolbar.basic(
+                  controller: _controller,
+                  showAlignmentButtons: false,
+                  showDividers: false,
+                  showStrikeThrough: false,
+                  showInlineCode: false,
+                  showDirection: false,
+                  showListCheck: false,
+                  showClearFormat: false,
+                  toolbarIconSize: 16,
+                  showListNumbers: false,
+                  showIndent: false,
+                  showUndo: false,
+                  showRedo: false,
+                  showBackgroundColorButton: false,
+                  showQuote: false,
+                  showCodeBlock: false,
+                  showHeaderStyle: false,
+                  showListBullets: false,
+                  iconTheme: const quill.QuillIconTheme(
+                      iconUnselectedColor: Colors.black),
+                ),
               ),
-            ),
             Expanded(
               child: SizedBox(
                 width: MediaQuery.of(context).size.width,
@@ -162,7 +225,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                                 autoFocus: true,
                                 focusNode: focusNode,
                                 scrollable: false,
-                                readOnly: false,
+                                readOnly: viewMode,
                               ),
                             ),
                           ),
@@ -229,6 +292,9 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
 
   Future<void> _onPointerDown(PointerDownEvent event) async {
     html.window.document.onContextMenu.listen((evt) => evt.preventDefault());
+    if (_controller.selection.isCollapsed) {
+      return;
+    }
     if (event.kind == PointerDeviceKind.mouse &&
         event.buttons == kSecondaryMouseButton) {
       final overlay =
@@ -276,6 +342,9 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                   const Text(
                     "Add Comment",
                     style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(
+                    height: 20,
                   ),
                   TextFormField(
                     onChanged: (value) {
