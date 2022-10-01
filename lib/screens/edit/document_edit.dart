@@ -6,8 +6,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:geekydocs/utils/responsive.dart';
+import 'package:geekydocs/geek_docs.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class DocumentEditPage extends StatefulWidget {
   const DocumentEditPage({Key? key}) : super(key: key);
@@ -247,8 +248,10 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
   @override
   void initState() {
     super.initState();
+    final provider =
+        Provider.of<AuthenticationProvider>(context, listen: false);
     FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
-      if (firebaseUser == null) {
+      if (firebaseUser == null || provider.doc == null) {
         context.go("/");
       }
     });

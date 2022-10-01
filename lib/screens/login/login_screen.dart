@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         }
                       },
                       child: Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(5),
@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ElevatedButton(
                               key: const Key('loginButton'),
                               style: ElevatedButton.styleFrom(
-                                primary: Theme.of(context).primaryColor,
+                                backgroundColor: Theme.of(context).primaryColor,
                               ),
                               onPressed: () {},
                               child: Text(
@@ -140,5 +140,15 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
+      if (firebaseUser != null) {
+        context.replace("/home");
+      }
+    });
+    super.initState();
   }
 }

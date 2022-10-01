@@ -8,11 +8,10 @@ class AuthenticationProvider extends BaseProvider {
   String userLogoutStatus = "user_logout_status";
   String fetchUserDataStatus = "fetch_user_data_status";
 
-  String? docId = "";
+  Map<String, dynamic>? doc;
   bool readOnly = false;
 
   late UserCredential? userCred;
-  void getUserData() async {}
 
   Future<UserCredential> signInWithGoogle() async {
     try {

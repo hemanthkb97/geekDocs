@@ -75,96 +75,64 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         body: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Start a new document",
-                style: Theme.of(context).textTheme.headline4,
-              ),
-              InkWell(
-                onTap: () {
-                  context.go('/document');
-                },
-                child: Card(
-                  elevation: 5,
-                  child: SizedBox(
-                    width: 250,
-                    height: 380,
-                    child: Center(
-                      child: Icon(
-                        Icons.create,
-                        color: Theme.of(context).primaryColor,
-                        size: 40,
+          child: StreamBuilder(
+              stream: FirebaseFirestore.instance.collection("docs").snapshots(),
+              builder: (context, snapshot) {
+                return Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  children: [
+                    Card(
+                      elevation: 4,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      child: Container(
+                        width: 220,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 6, horizontal: 24),
+                        child: const Text(
+                          "Create New Document",
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              Text(
-                "Recent Documents",
-                style: Theme.of(context).textTheme.headline4,
-              ),
-              StreamBuilder(
-                  stream:
-                      FirebaseFirestore.instance.collection("docs").snapshots(),
-                  builder: (context, snapshot) {
-                    return !snapshot.hasData
-                        ? const CircularProgressIndicator()
-                        : Wrap(
-                            children: [
-                              InkWell(
-                                onTap: () {},
-                                child: Card(
-                                  elevation: 5,
-                                  child: Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey[200]!),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Expanded(
-                                            flex: 4,
-                                            child: Container(),
-                                          ),
-                                          Divider(
-                                            color: Colors.grey[200]!,
-                                            thickness: 1,
-                                          ),
-                                          Expanded(
-                                            flex: 1,
-                                            child: Container(
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.article,
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                    size: 27,
-                                                  ),
-                                                  const Text("Name of doc"),
-                                                  const Spacer(),
-                                                  Icon(
-                                                    Icons.info,
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                    size: 27,
-                                                  ),
-                                                  const SizedBox(width: 7)
-                                                ],
-                                              ),
-                                            ),
-                                          )
-                                        ],
-                                      )),
-                                ),
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator()),
+                      ),
+                    if (snapshot.data != null)
+                      ...List.generate(
+                        snapshot.data!.docs.length,
+                        (index) => InkWell(
+                          onTap: () {
+                            Provider.of<AuthenticationProvider>(context,
+                                    listen: false)
+                                .doc = snapshot.data!.docs[index].data();
+                            context.go("/document");
+                          },
+                          child: Card(
+                            elevation: 4,
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            child: Container(
+                              width: 220,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 6, horizontal: 24),
+                              child: Text(
+                                snapshot.data!.docs[index].data()["doc_name"],
+                                style: const TextStyle(fontSize: 16),
                               ),
-                            ],
-                          );
-                  }),
-            ],
-          ),
+                            ),
+                          ),
+                        ),
+                      )
+                  ],
+                );
+              }),
         ),
       );
     }
