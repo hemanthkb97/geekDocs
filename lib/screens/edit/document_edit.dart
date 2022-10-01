@@ -277,7 +277,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
         context.replace("/");
       }
     });
-    print(provider.doc!.data()!["shared"]);
     userHasWriteAccess = provider.doc!.data()!["shared"]
         [FirebaseAuth.instance.currentUser!.email];
     firebaseDatabaseference = FirebaseDatabase.instance;
@@ -377,6 +376,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                     if (text.trim().isEmpty) {
                       return;
                     }
+                    print(_controller.selection);
                     firebaseDatabaseference = FirebaseDatabase.instance;
                     DatabaseReference ref = firebaseDatabaseference.ref(
                         Provider.of<AuthenticationProvider>(context,
@@ -387,6 +387,8 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                         "${FirebaseAuth.instance.currentUser!.email}_${DateTime.now().toString()}"] = {
                       "name": FirebaseAuth.instance.currentUser!.displayName,
                       "comment": text,
+                      "base": _controller.selection.baseOffset,
+                      "end": _controller.selection.extentOffset
                     };
                     _streamedValues["value"] =
                         _controller.document.toDelta().toJson();
