@@ -136,7 +136,7 @@ class _CreatePopupState extends State<CreatePopup> {
                           child: IconButton(
                             onPressed: () {
                               emailAddresses[_emailController.text] =
-                                  _permissionValue == "Read Mode";
+                                  _permissionValue != "Read Mode";
                               setState(() {
                                 _emailController.text = "";
                               });
@@ -159,7 +159,7 @@ class _CreatePopupState extends State<CreatePopup> {
 
                       return Container(
                           child: Text(
-                              "${list[index]}    ${emailAddresses[list[index]] == true ? "Read Mode" : "Edit Mode"}"));
+                              "${list[index]}    ${emailAddresses[list[index]] != true ? "Read Mode" : "Edit Mode"}"));
                     }).toList(),
                     const SizedBox(height: 18),
                     ElevatedButton(

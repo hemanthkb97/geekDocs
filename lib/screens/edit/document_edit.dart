@@ -254,7 +254,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                                 autoFocus: true,
                                 focusNode: focusNode,
                                 scrollable: false,
-                                readOnly: viewMode && userHasWriteAccess,
+                                readOnly: viewMode || !userHasWriteAccess,
                               ),
                             ),
                           ),
@@ -274,6 +274,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
   @override
   void initState() {
     super.initState();
+    comments.clear();
     final provider =
         Provider.of<AuthenticationProvider>(context, listen: false);
     if (provider.doc == null) {
@@ -284,6 +285,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
         context.replace("/");
       }
     });
+
     userHasWriteAccess = provider.doc!.data()!["shared"]
         [FirebaseAuth.instance.currentUser!.email];
     firebaseDatabaseference = FirebaseDatabase.instance;
@@ -307,6 +309,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
         });
       });
       ref.onValue.listen((event) {
+        comments.clear();
         if (!event.snapshot.exists) {
           return;
         }
@@ -350,7 +353,7 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
 
   Future<void> _onPointerDown(PointerDownEvent event) async {
     html.window.document.onContextMenu.listen((evt) => evt.preventDefault());
-    if (_controller.selection.isCollapsed && !userHasWriteAccess) {
+    if (_controller.selection.isCollapsed || !userHasWriteAccess) {
       return;
     }
     if (event.kind == PointerDeviceKind.mouse &&
